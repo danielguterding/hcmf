@@ -170,6 +170,7 @@ Eigen::MatrixXd HeisenbergChainEvaluator::get_hamiltonian_dense(vector<SpinState
   Eigen::MatrixXd h(nstates, nstates);
   h = Eigen::MatrixXd::Zero(nstates, nstates);
   fptype element=0;
+  #pragma omp parallel for schedule(dynamic,1)
   for(int i=0;i<nstates;i++){
     for(int j=i;j<nstates;j++){ //only calculate upper half of the matrix, because it is hermitian
       element = this->get_element(&basis[i], &basis[j]);
