@@ -4,6 +4,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 
+#include "files.hpp"
 #include "typedefs.hpp"
 
 using namespace std;
@@ -42,26 +43,21 @@ class SpinBasisGenerator{
     int get_sz(vector<bool> v);
 };
 
-class HeisenbergChainEvaluator{
+class HeisenbergHamiltonianSolver{
   public:
-    HeisenbergChainEvaluator(HeisenbergChainParameters& p);
-    ~HeisenbergChainEvaluator();
-    Eigen::MatrixXd get_hamiltonian_dense(vector<SpinState>& basis);
-    Eigen::SparseMatrix<fptype> get_hamiltonian_sparse(vector<SpinState>& basis, fptype element_threshold=1e-7);
+    HeisenbergHamiltonianSolver();
+    void set_bonds(vector<HeisenbergBond>& bonds);
+    void set_fields(vector<SiteDependentMagneticField>& fields){this->fields = fields;};
+    void calculate();
   private:
-    fptype get_element(SpinState* u, SpinState* v);
-    HeisenbergChainParameters p;
-};
-
-class LanczosSolver{
-  public:
-    LanczosSolver();
-    ~LanczosSolver();
-    void compute(Eigen::SparseMatrix<fptype> m, int nev, const fptype ev_threshold=1e-5);
-    Eigen::VectorXd get_eigenvalues(){return eigenvalues;};
-  private:
-    Eigen::MatrixXd hessenberg;
-    Eigen::VectorXd eigenvalues;
+    Eigen::MatrixXd get_hamiltonian(vector<SpinState>& basis);
+    fptype get_hamiltonian_element(SpinState* u, SpinState* v);
+    uint nsites;
+    vector<HeisenbergBond> bonds;
+    vector<SiteDependentMagneticField> fields;
+    vector<int> allowed_sz;
+    vector<Eigen::VectorXd> evals;
+    vector<Eigen::MatrixXd> evecs;
 };
 
 #endif
