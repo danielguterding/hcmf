@@ -166,16 +166,17 @@ void HeisenbergHamiltonianSolver::set_bonds(vector<HeisenbergBond>& bonds){
   this->nsites = this->bonds[0].s2;
 }
 
-void HeisenbergHamiltonianSolver::calculate(){
+void HeisenbergHamiltonianSolver::calculate_eigenvalues_eigenvectors(){
   
   allowed_sz = get_allowed_sz(this->nsites); //get allowed sz sectors
   evals.resize(0);
   evecs.resize(0);
+  basis_sectors.resize(0);
   SpinBasisGenerator bgen;
   for(uint i=0;i<allowed_sz.size();i++){
-    vector<SpinState> basis = bgen.get_basis(this->nsites,allowed_sz[i]);
+    basis_sectors.push_back(bgen.get_basis(this->nsites,allowed_sz[i]));
 
-    Eigen::MatrixXd h = get_hamiltonian(basis);
+    Eigen::MatrixXd h = get_hamiltonian(basis_sectors[i]);
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver;
     solver.compute(h);
     evals.push_back(solver.eigenvalues());
@@ -220,6 +221,20 @@ fptype HeisenbergHamiltonianSolver::get_hamiltonian_element(SpinState* u, SpinSt
   
   return element;
 };
+
+void HeisenbergHamiltonianSolver::calculate_groundstate_site_dependent_magnetization(){
+  
+  maggs.resize(0);
+  //first identify ground state energy
+  fptype gsenergy = evals[0](0);
+  for(uint i=1;i<evals.size();i++){
+    if(evals[i](0) < gsenergy){
+      gsenergy = evals[i](0);
+    }
+  }
+  //use states that lie in very narrow region around ground state and calculate their magnetization
+  
+}
 
 vector<int> get_allowed_sz(const int nsites){
   //sz is the net spin measured in units of 1/2

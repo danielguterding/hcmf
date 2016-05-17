@@ -48,7 +48,8 @@ class HeisenbergHamiltonianSolver{
     HeisenbergHamiltonianSolver();
     void set_bonds(vector<HeisenbergBond>& bonds);
     void set_fields(vector<SiteDependentMagneticField>& fields){this->fields = fields;};
-    void calculate();
+    void calculate_eigenvalues_eigenvectors();
+    void calculate_groundstate_site_dependent_magnetization();
   private:
     Eigen::MatrixXd get_hamiltonian(vector<SpinState>& basis);
     fptype get_hamiltonian_element(SpinState* u, SpinState* v);
@@ -56,8 +57,10 @@ class HeisenbergHamiltonianSolver{
     vector<HeisenbergBond> bonds;
     vector<SiteDependentMagneticField> fields;
     vector<int> allowed_sz;
+    vector<vector<SpinState> > basis_sectors; 
     vector<Eigen::VectorXd> evals;
     vector<Eigen::MatrixXd> evecs;
+    vector<fptype> maggs; //ground state site dependent magnetization
 };
 
 #endif

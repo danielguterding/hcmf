@@ -32,8 +32,9 @@ int main(int argc, char* argv[]){
     HeisenbergHamiltonianSolver solver;
     solver.set_bonds(bonds);
     solver.set_fields(fields);
-    solver.calculate();
-    //get magnetization per site
+    solver.calculate_eigenvalues_eigenvectors();
+    solver.calculate_groundstate_site_dependent_magnetization();
+    //get magnetization per site and write to file
 
     
     
