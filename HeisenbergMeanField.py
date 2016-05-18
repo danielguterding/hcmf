@@ -18,6 +18,9 @@ class HeisenbergMeanFieldCalculator:
     self.filename_sitemag = 'sitemag.dat'
     self.filename_fields = 'fields.dat'
     self.filename_heisenberg_bonds = 'bonds.dat'
+    self.magfield = 0.0
+  def set_magnetic_field(self, field):
+    self.magfield = float(field)
   def read_modelfile(self,infilename):
     infilehandle = open(infilename, 'r')
     lines = infilehandle.readlines()[2:]
@@ -49,8 +52,11 @@ class HeisenbergMeanFieldCalculator:
     #write effective magnetic fields for cluster solver
     outfilehandle = open(self.filename_fields, 'w')
     outfilehandle.write('#site idx, magnetic field\n')
-    for b in self.MeanFieldBonds:
-      outfilehandle.write('%i % f\n' % (b.sr, self.sitemag[b.sm]))
+    sitefields = self.magfield*np.ones((self.nsites), dtype=float)
+    for b in self.MeanFieldBonds: #add mean field bond induced local fields to global magnetic field
+      sitefields[b.sr] += self.sitemag[b.sm]
+    for i,f in enumerate(sitefields):
+      outfilehandle.write('%i % f\n' % (i, f))
     outfilehandle.close()
   def execute_cluster_solver(self):
     command = './heisenberg %s %s %s' % (self.filename_heisenberg_bonds, self.filename_fields, self.filename_sitemag)

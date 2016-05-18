@@ -1,4 +1,7 @@
 heisenberg
 *.o
 test.dat
-
+*.pyc
+bonds.dat
+fields.dat
+sitemag.dat
