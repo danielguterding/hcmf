@@ -9,9 +9,10 @@ class HeisenbergBond:
     self.J = float(J)
 
 class MeanFieldBond:
-  def __init__(self, s1, s2):
+  def __init__(self, s1, s2, J):
     self.sr = int(s1) #real site 
     self.sm = int(s2) #mirror site outside of cluster
+    self.J = float(J)
 
 class HeisenbergMeanFieldCalculator:
   def __init__(self):
@@ -37,11 +38,11 @@ class HeisenbergMeanFieldCalculator:
     for l in lines[i+3:]:
       sl = l.strip().split()
       if(len(sl) > 0):
-        b = MeanFieldBond(sl[0], sl[1])
+        b = MeanFieldBond(sl[0], sl[1], sl[2])
         self.MeanFieldBonds.append(b)
     #determine number of sites from bonds
     self.nsites = max([b.s1 for b in self.HeisenbergBonds] + [b.s2 for b in self.HeisenbergBonds])+1
-    self.sitemag = np.random.rand(self.nsites)
+    self.sitemag = np.zeros((self.nsites), dtype=float)
   def write_input_for_cluster_solver(self):
     #write Heisenberg bonds input file for cluster solver
     outfilehandle = open(self.filename_heisenberg_bonds, 'w')
@@ -54,7 +55,7 @@ class HeisenbergMeanFieldCalculator:
     outfilehandle.write('#site idx, magnetic field\n')
     sitefields = self.magfield*np.ones((self.nsites), dtype=float)
     for b in self.MeanFieldBonds: #add mean field bond induced local fields to global magnetic field
-      sitefields[b.sr] += self.sitemag[b.sm]
+      sitefields[b.sr] -= b.J*self.sitemag[b.sm]
     for i,f in enumerate(sitefields):
       outfilehandle.write('%i % f\n' % (i, f))
     outfilehandle.close()
@@ -88,7 +89,7 @@ class HeisenbergMeanFieldCalculator:
       self.execute_cluster_solver()
       self.read_site_magnetization()
       convparam = self.get_magnetization_difference_measure_and_mix_magnetization()
-      #print 'Iteration: %i\nConvergence parameter: %f' % (itcounter, convparam)
+      print 'Iteration: %i\nConvergence parameter: %f' % (itcounter, convparam)
       itcounter += 1
       if(convparam < threshold):
         print 'Self-consistent loop converged after %i iterations.' % itcounter
