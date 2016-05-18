@@ -66,7 +66,7 @@ void MagnetizationWriter::write_magnetization(const string outfilename){
   boost::filesystem::path outfilepath(outfilename);
   boost::filesystem::ofstream outfilehandle(outfilepath);
   outfilehandle << "#total magnetization per site" << endl << totalmag << endl;
-  outfilehandle << "#site resolved magnetization" << endl;
+  outfilehandle << "#site index, site resolved magnetization" << endl;
   for(uint i=0;i<sitemag.size();i++){
     outfilehandle << i << " " << sitemag[i] << endl;
   }
