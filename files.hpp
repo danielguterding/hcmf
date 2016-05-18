@@ -45,11 +45,12 @@ class SiteDependentMagneticFieldReader{
 class MagnetizationWriter{
   public:
     MagnetizationWriter();
+    void set_energy_per_site(const fptype energy){this->energy = energy;};
     void set_total_magnetization(const fptype totalmag){this->totalmag = totalmag;};
     void set_site_resolved_magnetization(const vector<fptype>& sitemag){this->sitemag = sitemag;};
     void write_magnetization(const string outfilename);
   private:
-    fptype totalmag;
+    fptype totalmag, energy;
     vector<fptype> sitemag;
 };
 

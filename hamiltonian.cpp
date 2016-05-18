@@ -181,6 +181,7 @@ void HeisenbergHamiltonianSolver::calculate_eigenvalues_eigenvectors(){
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver;
     solver.compute(h);
     evals.push_back(solver.eigenvalues());
+    //cout << evals[i].transpose() << endl;
     evecs.push_back(solver.eigenvectors());
   }
   //identify ground state energy
@@ -215,7 +216,6 @@ Eigen::MatrixXd HeisenbergHamiltonianSolver::get_hamiltonian(vector<SpinState>& 
 
 fptype HeisenbergHamiltonianSolver::get_hamiltonian_element(SpinState* u, SpinState* v){
   
-  const fptype gfac = 2.0;
   fptype element = 0;
   for(uint i=0;i<bonds.size();i++){ //loop over bonds
     const HeisenbergBond b = bonds[i];
@@ -225,7 +225,7 @@ fptype HeisenbergHamiltonianSolver::get_hamiltonian_element(SpinState* u, SpinSt
   
   for(uint i=0;i<fields.size();i++){ //loop over magnetic field entries
     const SiteDependentMagneticField f = fields[i];
-    element -= gfac*f.h*v->dot(u->apply_sz(f.s));
+    element -= f.h*v->dot(u->apply_sz(f.s));
   }
   
   return element;

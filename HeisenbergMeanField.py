@@ -42,7 +42,9 @@ class HeisenbergMeanFieldCalculator:
         self.MeanFieldBonds.append(b)
     #determine number of sites from bonds
     self.nsites = max([b.s1 for b in self.HeisenbergBonds] + [b.s2 for b in self.HeisenbergBonds])+1
-    self.sitemag = np.zeros((self.nsites), dtype=float)
+    #self.sitemag = np.zeros((self.nsites), dtype=float)
+    #self.sitemag = np.random.rand(self.nsites)
+    self.sitemag = np.array([0.5, 0.5, -0.5, -0.5])
   def write_input_for_cluster_solver(self):
     #write Heisenberg bonds input file for cluster solver
     outfilehandle = open(self.filename_heisenberg_bonds, 'w')
@@ -55,7 +57,10 @@ class HeisenbergMeanFieldCalculator:
     outfilehandle.write('#site idx, magnetic field\n')
     sitefields = self.magfield*np.ones((self.nsites), dtype=float)
     for b in self.MeanFieldBonds: #add mean field bond induced local fields to global magnetic field
-      sitefields[b.sr] -= b.J*self.sitemag[b.sm]
+      addterm = -b.J*self.sitemag[b.sm]
+      #print addterm
+      sitefields[b.sr] += addterm 
+    #print sitefields
     for i,f in enumerate(sitefields):
       outfilehandle.write('%i % f\n' % (i, f))
     outfilehandle.close()
@@ -63,26 +68,31 @@ class HeisenbergMeanFieldCalculator:
     command = './heisenberg %s %s %s' % (self.filename_heisenberg_bonds, self.filename_fields, self.filename_sitemag)
     FNULL = open(os.devnull, 'w')
     p = subprocess.Popen(command.split(), stdout=FNULL, stderr=subprocess.STDOUT) #hide cluster solver output
+    #p = subprocess.Popen(command.split())
     p.wait()
     FNULL.close()
   def read_site_magnetization(self):
     infilehandle = open(self.filename_sitemag)
     lines = infilehandle.readlines()
-    #self.totalmag_per_site = float(lines[1])
+    self.energy_per_site = float(lines[1])
+    self.totalmag_per_site = float(lines[3])
     self.newsitemag = np.zeros((self.nsites))
-    for l in lines[3:]:
+    for l in lines[5:]:
       sl = l.strip().split()
       i = int(sl[0])
       h = float(sl[1])
       self.newsitemag[i] = h
     infilehandle.close()
   def get_magnetization_difference_measure_and_mix_magnetization(self):
+    #print self.sitemag
+    #print self.newsitemag
     convparam = np.linalg.norm(self.newsitemag - self.sitemag)/self.nsites
     mixingfac = 0.4
     self.sitemag = self.sitemag*(1-mixingfac) + self.newsitemag*mixingfac
     return convparam
   def solve_selfconsistently(self):
-    threshold = 1e-3
+    threshold = 1e-4
+    maxiter = 100
     itcounter = 0
     while True:
       self.write_input_for_cluster_solver()
@@ -90,8 +100,16 @@ class HeisenbergMeanFieldCalculator:
       self.read_site_magnetization()
       convparam = self.get_magnetization_difference_measure_and_mix_magnetization()
       #print 'Iteration: %i\nConvergence parameter: %f' % (itcounter, convparam)
+      #print 'GS energy: % f' % self.energy_per_site
       itcounter += 1
       if(convparam < threshold):
         print 'Self-consistent loop converged after %i iterations.' % itcounter
         break
+      if(itcounter == maxiter):
+        print 'Self-consistent loop did not converge.'
+        break
+  def get_energy_per_site(self):
+    return self.energy_per_site
+  def get_total_magnetization_per_site(self):
+    return self.totalmag_per_site
         

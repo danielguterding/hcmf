@@ -40,7 +40,9 @@ int main(int argc, char* argv[]){
     //get magnetization per site and write to file
     const fptype totalmag = solver.get_groundstate_total_magnetization_per_site();
     const vector<fptype> maggs = solver.get_groundstate_site_dependent_magnetization();
+    const fptype energy_per_site = solver.get_groundstate_energy_per_site();
     MagnetizationWriter MagWriter;
+    MagWriter.set_energy_per_site(energy_per_site);
     MagWriter.set_total_magnetization(totalmag);
     MagWriter.set_site_resolved_magnetization(maggs);
     MagWriter.write_magnetization(OutfilenameMagnetization);

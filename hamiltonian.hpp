@@ -52,6 +52,7 @@ class HeisenbergHamiltonianSolver{
     void calculate_groundstate_site_dependent_magnetization();
     vector<fptype> get_groundstate_site_dependent_magnetization(){return maggs;};
     fptype get_groundstate_total_magnetization_per_site(){return totalmag;};
+    fptype get_groundstate_energy_per_site(){return gsenergy/nsites;};
   private:
     Eigen::MatrixXd get_hamiltonian(vector<SpinState>& basis);
     fptype get_hamiltonian_element(SpinState* u, SpinState* v);
