@@ -6,7 +6,7 @@ HeisenbergBondReader::HeisenbergBondReader(){
   
 }
 
-void HeisenbergBondReader::read_file(string infilename){
+void HeisenbergBondReader::read_file(const string infilename){
   
   this->bonds.resize(0);
   
@@ -34,7 +34,7 @@ SiteDependentMagneticFieldReader::SiteDependentMagneticFieldReader(){
   
 }
 
-void SiteDependentMagneticFieldReader::read_file(string infilename){
+void SiteDependentMagneticFieldReader::read_file(const string infilename){
   
   this->fields.resize(0);
   
@@ -55,6 +55,22 @@ void SiteDependentMagneticFieldReader::read_file(string infilename){
     this->fields.push_back(f);
   }
   infilehandle.close();
+}
+
+MagnetizationWriter::MagnetizationWriter(){
+  
+}
+
+void MagnetizationWriter::write_magnetization(const string outfilename){
+  
+  boost::filesystem::path outfilepath(outfilename);
+  boost::filesystem::ofstream outfilehandle(outfilepath);
+  outfilehandle << "#total magnetization per site" << endl << totalmag << endl;
+  outfilehandle << "#site resolved magnetization" << endl;
+  for(uint i=0;i<sitemag.size();i++){
+    outfilehandle << i << " " << sitemag[i] << endl;
+  }
+  outfilehandle.close();
 }
 
 string trim_all(const std::string &str){  //with a more recent version of boost boost::trim_all() can be used instead of this function

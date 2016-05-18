@@ -162,8 +162,8 @@ HeisenbergHamiltonianSolver::HeisenbergHamiltonianSolver(){
 void HeisenbergHamiltonianSolver::set_bonds(vector<HeisenbergBond>& bonds){
   
   this->bonds = bonds;
-  sort(this->bonds.begin(), this->bonds.end(), [](const HeisenbergBond& b1, const HeisenbergBond& b2){return b1.s2 < b2.s2;}); //compare with inline lambda function
-  this->nsites = this->bonds[0].s2;
+  sort(this->bonds.begin(), this->bonds.end(), [](const HeisenbergBond& b1, const HeisenbergBond& b2){return b1.s2 > b2.s2;}); //compare with inline lambda function
+  this->nsites = this->bonds[0].s2+1;
 }
 
 void HeisenbergHamiltonianSolver::calculate_eigenvalues_eigenvectors(){
@@ -173,6 +173,7 @@ void HeisenbergHamiltonianSolver::calculate_eigenvalues_eigenvectors(){
   evecs.resize(0);
   basis_sectors.resize(0);
   SpinBasisGenerator bgen;
+  //solve Hamiltonian for each sector of sz
   for(uint i=0;i<allowed_sz.size();i++){
     basis_sectors.push_back(bgen.get_basis(this->nsites,allowed_sz[i]));
 
@@ -181,6 +182,13 @@ void HeisenbergHamiltonianSolver::calculate_eigenvalues_eigenvectors(){
     solver.compute(h);
     evals.push_back(solver.eigenvalues());
     evecs.push_back(solver.eigenvectors());
+  }
+  //identify ground state energy
+  gsenergy = evals[0](0);
+  for(uint i=1;i<evals.size();i++){
+    if(evals[i](0) < gsenergy){
+      gsenergy = evals[i](0);
+    }
   }
 }
 
@@ -211,7 +219,8 @@ fptype HeisenbergHamiltonianSolver::get_hamiltonian_element(SpinState* u, SpinSt
   fptype element = 0;
   for(uint i=0;i<bonds.size();i++){ //loop over bonds
     const HeisenbergBond b = bonds[i];
-    element += -b.J/2.0*(v->dot(u->apply_sminus(b.s1)->apply_splus(b.s2)) + v->dot(u->apply_sminus(b.s2)->apply_splus(b.s1))) - b.J*v->dot(u->apply_sz(b.s2)->apply_sz(b.s1));
+    element += b.J/2.0*(v->dot(u->apply_sminus(b.s1)->apply_splus(b.s2)) + v->dot(u->apply_sminus(b.s2)->apply_splus(b.s1)));
+    element += b.J*v->dot(u->apply_sz(b.s2)->apply_sz(b.s1));
   }
   
   for(uint i=0;i<fields.size();i++){ //loop over magnetic field entries
@@ -224,16 +233,35 @@ fptype HeisenbergHamiltonianSolver::get_hamiltonian_element(SpinState* u, SpinSt
 
 void HeisenbergHamiltonianSolver::calculate_groundstate_site_dependent_magnetization(){
   
+  const fptype threshold = 1e-13;
   maggs.resize(0);
-  //first identify ground state energy
-  fptype gsenergy = evals[0](0);
-  for(uint i=1;i<evals.size();i++){
-    if(evals[i](0) < gsenergy){
-      gsenergy = evals[i](0);
+  maggs.resize(nsites, 0.0);
+  //use states that lie in very narrow region around ground state and calculate their site-resolved magnetization
+  uint counter = 0;
+  for(uint i=0;i<allowed_sz.size();i++){ //loop over spin sectors
+    for(uint j=0;j<evals[i].size();j++){ //loop over eigenvalues in that sector
+      if(fabs(evals[i](j) - gsenergy) < threshold){ //if energy of state is very close to GS energy, take state into account for calculation of magnetization
+        counter++;
+        Eigen::VectorXd ev = evecs[i].col(j);
+        for(uint l=0;l<basis_sectors[i].size();l++){ //loop over basis states
+          SpinState u = basis_sectors[i][l];
+          const fptype coeff = pow(ev(l),2);
+          for(uint k=0;k<nsites;k++){ //loop over lattice sites
+            maggs[k] += coeff*u.dot(u.apply_sz(k));
+          }
+        }
+      }
     }
   }
-  //use states that lie in very narrow region around ground state and calculate their magnetization
-  
+  //normalize magnetization by number of involved states
+  for(uint i=0;i<nsites;i++){
+    maggs[i] /= counter;  
+  }
+  //calculate total magnetization per site
+  totalmag = 0;
+  for(uint i=0;i<nsites;i++){
+    totalmag += maggs[i]/nsites;
+  }
 }
 
 vector<int> get_allowed_sz(const int nsites){

@@ -27,7 +27,7 @@ struct SiteDependentMagneticField{
 class HeisenbergBondReader{
   public:
     HeisenbergBondReader();
-    void read_file(string infilename);
+    void read_file(const string infilename);
     vector<HeisenbergBond> get_bonds(){return bonds;};
   private:
     vector<HeisenbergBond> bonds;
@@ -36,10 +36,21 @@ class HeisenbergBondReader{
 class SiteDependentMagneticFieldReader{
   public:
     SiteDependentMagneticFieldReader();
-    void read_file(string infilename);
+    void read_file(const string infilename);
     vector<SiteDependentMagneticField> get_fields(){return fields;};
   private:
     vector<SiteDependentMagneticField> fields;
+};
+
+class MagnetizationWriter{
+  public:
+    MagnetizationWriter();
+    void set_total_magnetization(const fptype totalmag){this->totalmag = totalmag;};
+    void set_site_resolved_magnetization(const vector<fptype>& sitemag){this->sitemag = sitemag;};
+    void write_magnetization(const string outfilename);
+  private:
+    fptype totalmag;
+    vector<fptype> sitemag;
 };
 
 #endif
