@@ -89,7 +89,7 @@ class HeisenbergMeanFieldCalculator:
       self.execute_cluster_solver()
       self.read_site_magnetization()
       convparam = self.get_magnetization_difference_measure_and_mix_magnetization()
-      print 'Iteration: %i\nConvergence parameter: %f' % (itcounter, convparam)
+      #print 'Iteration: %i\nConvergence parameter: %f' % (itcounter, convparam)
       itcounter += 1
       if(convparam < threshold):
         print 'Self-consistent loop converged after %i iterations.' % itcounter
