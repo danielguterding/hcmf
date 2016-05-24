@@ -6,6 +6,7 @@ def main():
   modelfilename = 'examples/meanfieldmodel.dat'
   calc = HeisenbergMeanFieldCalculator()
   calc.read_modelfile(modelfilename)
+  calc.set_site_resolved_magnetization([-1, 1, 1, -1, -1, 1, 1, -1])
   #for B in np.linspace(0,1,num=100):
   for B in [0]:
     calc.set_magnetic_field(B)

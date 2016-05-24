@@ -20,6 +20,8 @@ class HeisenbergMeanFieldCalculator:
     self.filename_fields = 'fields.dat'
     self.filename_heisenberg_bonds = 'bonds.dat'
     self.magfield = 0.0
+  def set_site_resolved_magnetization(self, mag):
+    self.sitemag = np.zeros((self.nsites), dtype=float) + np.array(mag, dtype=float)[:self.nsites]
   def set_magnetic_field(self, field):
     self.magfield = float(field)
   def read_modelfile(self,infilename):
@@ -42,9 +44,6 @@ class HeisenbergMeanFieldCalculator:
         self.MeanFieldBonds.append(b)
     #determine number of sites from bonds
     self.nsites = max([b.s1 for b in self.HeisenbergBonds] + [b.s2 for b in self.HeisenbergBonds])+1
-    #self.sitemag = np.zeros((self.nsites), dtype=float)
-    #self.sitemag = np.random.rand(self.nsites)
-    self.sitemag = np.array([-0.5, 0.5, -0.5, 0.5])
   def write_input_for_cluster_solver(self):
     #write Heisenberg bonds input file for cluster solver
     outfilehandle = open(self.filename_heisenberg_bonds, 'w')
