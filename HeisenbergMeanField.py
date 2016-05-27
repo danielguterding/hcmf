@@ -3,16 +3,16 @@ import subprocess
 import numpy as np
 
 class HeisenbergBond:
-  def __init__(self, s1, s2, J):
+  def __init__(self, s1, s2, Jidx):
     self.s1 = int(s1)
     self.s2 = int(s2)
-    self.J = float(J)
+    self.Jidx = int(Jidx)
 
 class MeanFieldBond:
-  def __init__(self, s1, s2, J):
+  def __init__(self, s1, s2, Jidx):
     self.sr = int(s1) #real site 
     self.sm = int(s2) #mirror site outside of cluster
-    self.J = float(J)
+    self.Jidx = int(Jidx)
 
 class HeisenbergMeanFieldCalculator:
   def __init__(self):
@@ -24,6 +24,8 @@ class HeisenbergMeanFieldCalculator:
     self.sitemag = np.zeros((self.nsites), dtype=float) + np.array(mag, dtype=float)[:self.nsites]
   def set_magnetic_field(self, field):
     self.magfield = float(field)
+  def set_exchange_parameters(self, param):
+    self.exchange_parameters = np.array(param, dtype=float)
   def read_modelfile(self,infilename):
     infilehandle = open(infilename, 'r')
     lines = infilehandle.readlines()[2:]
@@ -49,14 +51,14 @@ class HeisenbergMeanFieldCalculator:
     outfilehandle = open(self.filename_heisenberg_bonds, 'w')
     outfilehandle.write('#idx site 1, idx site 2, exchange coupling J\n')
     for b in self.HeisenbergBonds:
-      outfilehandle.write('%i %i % f\n' % (b.s1, b.s2, b.J))
+      outfilehandle.write('%i %i % f\n' % (b.s1, b.s2, self.exchange_parameters[b.Jidx]))
     outfilehandle.close()
     #write effective magnetic fields for cluster solver
     outfilehandle = open(self.filename_fields, 'w')
     outfilehandle.write('#site idx, magnetic field\n')
     sitefields = 2.0*self.magfield*np.ones((self.nsites), dtype=float)
     for b in self.MeanFieldBonds: #add mean field bond induced local fields to global magnetic field
-      addterm = -b.J*self.sitemag[b.sm]
+      addterm = -self.exchange_parameters[b.Jidx]*self.sitemag[b.sm]
       #print addterm
       sitefields[b.sr] += addterm 
     #print sitefields
@@ -84,7 +86,7 @@ class HeisenbergMeanFieldCalculator:
     #add mean field terms <Si><Sj> to energy
     addenergy = 0.0
     for b in self.MeanFieldBonds:
-      addenergy -= 0.5*b.J*self.newsitemag[b.sr]*self.newsitemag[b.sm]
+      addenergy -= 0.5*self.exchange_parameters[b.Jidx]*self.newsitemag[b.sr]*self.newsitemag[b.sm]
     self.energy_per_site += addenergy/float(self.nsites)
     infilehandle.close()
   def get_magnetization_difference_measure_and_mix_magnetization(self):
