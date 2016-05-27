@@ -97,7 +97,7 @@ class HeisenbergMeanFieldCalculator:
     self.sitemag = self.sitemag*(1-mixingfac) + self.newsitemag*mixingfac
     return convparam
   def solve_selfconsistently(self):
-    threshold = 1e-4
+    threshold = 1e-5
     maxiter = 1000
     itcounter = 0
     while True:
@@ -118,4 +118,6 @@ class HeisenbergMeanFieldCalculator:
     return self.energy_per_site
   def get_total_magnetization_per_site(self):
     return self.totalmag_per_site
+  def get_magnetization_of_site(self,idx):
+    return self.sitemag[int(idx)]
         
