@@ -1,6 +1,7 @@
 import os
 import subprocess
 import numpy as np
+import itertools
 
 class HeisenbergBond:
   def __init__(self, s1, s2, Jidx):
@@ -93,7 +94,7 @@ class HeisenbergMeanFieldCalculator:
     #print self.sitemag
     #print self.newsitemag
     convparam = np.linalg.norm(self.newsitemag - self.sitemag)/self.nsites
-    mixingfac = 0.4
+    mixingfac = 0.45
     self.sitemag = self.sitemag*(1-mixingfac) + self.newsitemag*mixingfac
     return convparam
   def solve_selfconsistently(self):
@@ -120,4 +121,55 @@ class HeisenbergMeanFieldCalculator:
     return self.totalmag_per_site
   def get_magnetization_of_site(self,idx):
     return self.sitemag[int(idx)]
-        
+  
+class ClassicalGroundStateCalculator:
+  def __init__(self):
+    pass
+  def read_modelfile(self,infilename):
+    infilehandle = open(infilename, 'r')
+    lines = infilehandle.readlines()[2:]
+    infilehandle.close()
+    self.HeisenbergBonds = []
+    self.MeanFieldBonds = []
+    for i,l in enumerate(lines):
+      sl = l.strip().split()
+      if('#' not in l and len(sl) > 0):
+        b = HeisenbergBond(sl[0], sl[1], sl[2])
+        self.HeisenbergBonds.append(b)
+      else:
+        break
+    for l in lines[i+3:]:
+      sl = l.strip().split()
+      if(len(sl) > 0):
+        b = MeanFieldBond(sl[0], sl[1], sl[2])
+        self.MeanFieldBonds.append(b)
+    #determine number of sites from bonds
+    self.nsites = max([b.s1 for b in self.HeisenbergBonds] + [b.s2 for b in self.HeisenbergBonds])+1
+  def set_exchange_parameters(self, param):
+    self.exchange_parameters = np.array(param, dtype=float)
+  def unique(self, iterable):
+    seen = set()
+    for x in iterable:
+        if x in seen:
+            continue
+        seen.add(x)
+        yield x
+  def calculate_classical_energies(self):
+    #frist generate all unique possible states
+    baseconfig = 5*[1] + 4*[-1]
+    self.states = [s for s in self.unique(itertools.permutations(baseconfig))]
+    self.energies = [self.get_energy_of_config_per_site(s) for s in self.states]
+    self.sortidx = np.argsort(self.energies)
+  def get_energy_of_config_per_site(self, state):
+    energy = 0
+    for b in self.HeisenbergBonds:
+      energy += 0.25*state[b.s1]*state[b.s2]*self.exchange_parameters[b.Jidx]
+    for b in self.MeanFieldBonds:
+      energy += 0.125*state[b.sr]*state[b.sm]*self.exchange_parameters[b.Jidx] #half of normal bond, because it belongs to two unit cells
+    return energy/float(self.nsites)
+  def print_states_and_energies_per_site(self):
+    for idx in self.sortidx[::-1]:
+      print self.energies[idx], self.states[idx]
+  def print_lowest_energy_and_state(self):
+    idx = self.sortidx[0]
+    print self.energies[idx], self.states[idx]

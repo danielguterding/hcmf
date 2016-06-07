@@ -1,6 +1,6 @@
 import os,sys 
 import numpy as np
-from HeisenbergMeanField import HeisenbergMeanFieldCalculator, ClassicalGroundStateCalculator
+from HeisenbergMeanField import HeisenbergMeanFieldCalculator
 
 class MagneticOrder:
   def __init__(self, name, pattern):
@@ -18,7 +18,7 @@ class MeanFieldResult:
 def get_patterns_honeycomb():
   patterns = []
   patterns.append(MagneticOrder('PM', [0, 0, 0, 0, 0, 0, 0, 0, 0]))
-  patterns.append(MagneticOrder('Trimer', [0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5]))
+  #patterns.append(MagneticOrder('Trimer', [0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5]))
   #patterns.append(MagneticOrder('Hexagon Neel', [-0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, 0.5]))
   return patterns
 
@@ -39,34 +39,25 @@ def write_results(outfilename, results):
   outfilehandle.close()
 
 def main():
-  outfilename = 'result_meanfieldmodel_Y3Cu9OH19Cl8_9spin_cluster1.dat'
-  modelfilename = 'examples/meanfieldmodel_Y3Cu9OH19Cl8_9spin_cluster1.dat'
+  outfilename = 'result_meanfieldmodel_Y3Cu9OH19Cl8_9spin_cluster3.dat'
+  modelfilename = 'examples/meanfieldmodel_Y3Cu9OH19Cl8_9spin_cluster3.dat'
   magneticpatterns = get_patterns_honeycomb()
   calc = HeisenbergMeanFieldCalculator()
   calc.read_modelfile(modelfilename)
-  J2vals = np.linspace(0.0,1.0,num=5,endpoint=True)
+  J2vals = np.linspace(0.0, 1,num=40,endpoint=True)
   B = 0.0
   results = []
-  classcalc = ClassicalGroundStateCalculator()
-  classcalc.read_modelfile(modelfilename)
-  for J2 in np.linspace(0,1,num=10):
-    exchange_parameters = [0.1, J2, 1.0]
-    classcalc.set_exchange_parameters(exchange_parameters)
-    classcalc.calculate_classical_energies()
-    print J2
-    classcalc.print_lowest_energy_and_state()
-    #classcalc.print_states_and_energies_per_site()
-  #for J2 in J2vals:
-  #  res_this_J2 = []
-  #  for p in magneticpatterns:
-  #    exchange_parameters = [0.1, J2, 1.0]
-  #    calc.set_magnetic_field(B)
-  #    calc.set_exchange_parameters(exchange_parameters)
-  #    calc.set_site_resolved_magnetization(p.pattern)
-  #    calc.solve_selfconsistently()
-  #    res_this_J2.append(MeanFieldResult(J2, p.name,calc.get_energy_per_site(),calc.get_total_magnetization_per_site(),calc.get_magnetization_of_site(0)))
-  #  results.append(res_this_J2)
-  #write_results(outfilename, results)
+  for J2 in J2vals:
+    res_this_J2 = []
+    for p in magneticpatterns:
+      exchange_parameters = [0.3, J2, 1.0]
+      calc.set_magnetic_field(B)
+      calc.set_exchange_parameters(exchange_parameters)
+      calc.set_site_resolved_magnetization(p.pattern)
+      calc.solve_selfconsistently()
+      res_this_J2.append(MeanFieldResult(J2, p.name,calc.get_energy_per_site(),calc.get_total_magnetization_per_site(),calc.get_magnetization_of_site(0)))
+    results.append(res_this_J2)
+  write_results(outfilename, results)
   return 0
   
 main()
