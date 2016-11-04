@@ -58,87 +58,63 @@ int SpinBasisGeneratorSZ::get_sz(vector<bool> v){
   return sz;
 }
 
-/*
-
-HeisenbergHamiltonianSolver::HeisenbergHamiltonianSolver(){
+HeisenbergHamiltonianCalculator::HeisenbergHamiltonianCalculator(){
   
 }
 
-void HeisenbergHamiltonianSolver::set_bonds(vector<HeisenbergBond>& bonds){
+void HeisenbergHamiltonianCalculator::set_bonds(vector<HeisenbergBond>& bonds){
   
   this->bonds = bonds;
   sort(this->bonds.begin(), this->bonds.end(), [](const HeisenbergBond& b1, const HeisenbergBond& b2){return b1.s2 > b2.s2;}); //compare with inline lambda function
   this->nsites = this->bonds[0].s2+1;
+  
+  //sort bonds by Jidx to determine how many different interaction terms we have
+  sort(this->bonds.begin(), this->bonds.end(), [](const HeisenbergBond& b1, const HeisenbergBond& b2){return b1.Jidx > b2.Jidx;}); //compare with inline lambda function
+  this->nJidx = bonds[0].Jidx+1;
 }
 
-void HeisenbergHamiltonianSolver::calculate_eigenvalues_eigenvectors(){
+void HeisenbergHamiltonianCalculator::set_basis(const vector<SpinState>& basis){
   
-  allowed_sz = get_allowed_sz(this->nsites); //get allowed sz sectors
-  evals.resize(0);
-  evecs.resize(0);
-  basis_sectors.resize(0);
-  SpinBasisGenerator bgen;
-  //solve Hamiltonian for each sector of sz
-  for(uint i=0;i<allowed_sz.size();i++){
-    basis_sectors.push_back(bgen.get_basis(this->nsites,allowed_sz[i]));
-
-    Eigen::MatrixXd h = get_hamiltonian(basis_sectors[i]);
-    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver;
-    solver.compute(h);
-    evals.push_back(solver.eigenvalues());
-    //cout << evals[i].transpose() << endl;
-    evecs.push_back(solver.eigenvectors());
-  }
-  //identify ground state energy
-  gsenergy = evals[0](0);
-  for(uint i=1;i<evals.size();i++){
-    if(evals[i](0) < gsenergy){
-      gsenergy = evals[i](0);
-    }
-  }
+  this->basis = basis;
 }
 
-Eigen::MatrixXd HeisenbergHamiltonianSolver::get_hamiltonian(vector<SpinState>& basis){
+void HeisenbergHamiltonianCalculator::set_outfilename(const string outfilename){
   
-  const int nstates = basis.size();
-  Eigen::MatrixXd h = Eigen::MatrixXd::Zero(nstates, nstates);
-  fptype element=0;
-  for(int i=0;i<nstates;i++){
-    for(int j=i;j<nstates;j++){ //only calculate upper half of the matrix, because it is real symmetric
-      element = this->get_hamiltonian_element(&basis[i], &basis[j]);
-      if(i == j){
-        h(i,i) = element;
-      }
-      else{
-        h(i,j) = element;
-        h(j,i) = h(i,j);
+  this->outfilename = outfilename;
+  boost::filesystem::path outfilepath(this->outfilename);
+  boost::filesystem::ofstream outfilehandle(outfilepath);
+  vector<string> outfilenameseachinteraction(this->nJidx);
+  for(uint i=0;i<this->nJidx+1;i++){
+    string ofn = (boost::format("%s.%03i") % this->outfilename % i).str();
+    outfilenameseachinteraction.push_back(ofn);
+    outfilehandle << ofn << endl;
+  }
+  outfilehandle.close();
+}
+
+void HeisenbergHamiltonianCalculator::calculate_elements(){
+  
+  const fptype threshold = 1e-12;
+  HamiltonianElement element;
+  vector<vector<HamiltonianElement> > hamiltonianelementseachinteraction(nJidx);
+  for(uint i=0;i<bonds.size();i++){//loop over bonds
+    for(unsigned long long int j=0;j<basis.size();j++){//row index
+      for(unsigned long long int k=j;k<basis.size();k++){//column index
+        element.i = j;
+        element.j = k;
+        element.v = get_hamiltonian_element(&bonds[i], &basis[j], &basis[k]);
+        if(fabs(element.v) > threshold){
+          hamiltonianelementseachinteraction[bonds[i].Jidx].push_back(element);
+        }
       }
     }
   }
-  
-  return h;
 }
 
-fptype HeisenbergHamiltonianSolver::get_hamiltonian_element(SpinState* u, SpinState* v){
+fptype HeisenbergHamiltonianCalculator::get_hamiltonian_element(const HeisenbergBond* b, SpinState* u, SpinState* v){
   
   fptype element = 0;
-  for(uint i=0;i<bonds.size();i++){ //loop over bonds
-    const HeisenbergBond b = bonds[i];
-    element += b.J/2.0*(v->dot(u->apply_sminus(b.s1)->apply_splus(b.s2)) + v->dot(u->apply_sminus(b.s2)->apply_splus(b.s1)));
-    element += b.J*v->dot(u->apply_sz(b.s2)->apply_sz(b.s1));
-  }
-  
+  element += 0.5*(v->dot(u->apply_sminus(b->s1)->apply_splus(b->s2)) + v->dot(u->apply_sminus(b->s2)->apply_splus(b->s1)));
+  element += v->dot(u->apply_sz(b->s2)->apply_sz(b->s1));
   return element;
 };
-
-*/
-
-vector<int> get_allowed_sz(const int nsites){
-  //sz is the net spin measured in units of 1/2
-  vector<int> sz;
-  for(int i=-nsites;i<(nsites+1);i+=2){
-    sz.push_back(i);
-  }
-  
-  return sz;
-}

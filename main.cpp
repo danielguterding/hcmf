@@ -15,9 +15,10 @@ using namespace std;
 
 int main(int argc, char* argv[]){
   
-  if(3 == argc){
+  if(4 == argc){
     const string InfilenameBonds = argv[1];
     const string OutfilenameSpinBasis = argv[2];
+    const string OutfilenameHamiltonian = argv[3];
     
     //read Heisenberg bonds
     HeisenbergBondReader HeisenbergBondReader;
@@ -36,6 +37,13 @@ int main(int argc, char* argv[]){
     //write basis to disk
     SpinBasisWriter BasisWriter;
     BasisWriter.write_basis(OutfilenameSpinBasis, basis);
+    
+    //calculate Hamiltonian
+    HeisenbergHamiltonianCalculator calc;
+    calc.set_bonds(bonds);
+    calc.set_outfilename(OutfilenameHamiltonian);
+    calc.set_basis(basis);
+    calc.calculate_elements();
 
     //solve Hamiltonian
     /* HeisenbergHamiltonianSolver solver;

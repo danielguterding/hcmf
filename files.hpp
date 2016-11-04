@@ -16,7 +16,12 @@ using namespace std;
 
 struct HeisenbergBond{
   uint s1,s2; //site indices
-  fptype J; //exchange coupling
+  fptype Jidx; //exchange index
+};
+
+struct HamiltonianElement{
+  unsigned long long int i,j; //matrix indices
+  fptype v; //value
 };
 
 class SpinState{

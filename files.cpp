@@ -130,7 +130,7 @@ void HeisenbergBondReader::read_file(const string infilename){
     HeisenbergBond b;
     b.s1 = boost::lexical_cast<int>(splitline[0]);
     b.s2 = boost::lexical_cast<int>(splitline[1]);
-    b.J = boost::lexical_cast<fptype>(splitline[2]);
+    b.Jidx = boost::lexical_cast<int>(splitline[2]);
     this->bonds.push_back(b);
   }
   infilehandle.close();

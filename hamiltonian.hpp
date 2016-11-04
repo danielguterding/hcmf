@@ -1,8 +1,6 @@
 //hamiltonian.hpp
 #include <iostream>
 #include <vector>
-#include <Eigen/Dense>
-#include <Eigen/Sparse>
 
 #include "files.hpp"
 #include "typedefs.hpp"
@@ -23,22 +21,20 @@ class SpinBasisGeneratorSZ{
     vector<SpinState> basis;
 };
 
-/*
-class HeisenbergHamiltonianSolver{
+class HeisenbergHamiltonianCalculator{
   public:
-    HeisenbergHamiltonianSolver();
+    HeisenbergHamiltonianCalculator();
     void set_bonds(vector<HeisenbergBond>& bonds);
-    void calculate_eigenvalues_eigenvectors();
+    void set_basis(const vector<SpinState>& basis);
+    void set_outfilename(const string outfilename);
+    void calculate_elements();
   private:
-    Eigen::MatrixXd get_hamiltonian(vector<SpinState>& basis);
-    fptype get_hamiltonian_element(SpinState* u, SpinState* v);
-    uint nsites;
-    fptype gsenergy, totalmag;
+    fptype get_hamiltonian_element(const HeisenbergBond* b, SpinState* u, SpinState* v);
+    uint nsites, nJidx;
     vector<HeisenbergBond> bonds;
-    vector<int> allowed_sz;
-    vector<vector<SpinState> > basis_sectors; 
+    vector<SpinState> basis;
+    string outfilename;
 };
-*/
 
 #endif
 
