@@ -12,60 +12,33 @@ using namespace std;
 #ifndef __HAMILTONIAN_H_INCLUDED__
 #define __HAMILTONIAN_H_INCLUDED__
 
-struct HeisenbergChainParameters{
-  int nsites, periodic, neigenvalues;
-  fptype J, B, g;
-};
-
-class SpinState{
+class SpinBasisGeneratorSZ{
   public:
-    SpinState();
-    ~SpinState();
-    SpinState* apply_splus(const int i);
-    SpinState* apply_sminus(const int i);
-    SpinState* apply_sz(const int i);
-    fptype dot(SpinState* otherstate);
-    void copy_to(SpinState* newstate);
-    vector<bool> statevec;
-    fptype prefactor, spin;
-    bool copiedstate;
-  private:
-
-};
-
-class SpinBasisGenerator{
-  public:
-    SpinBasisGenerator();
-    ~SpinBasisGenerator();
-    vector<SpinState> get_basis(const int nsites, const int sz);
+    SpinBasisGeneratorSZ(const uint nsites, const int sz);
+    ~SpinBasisGeneratorSZ();
+    vector<SpinState> get_basis(){return basis;};
   private:
     vector<bool> convert_to_binary_vectorbool(const int nsites, const unsigned long long int value);
     int get_sz(vector<bool> v);
+    vector<SpinState> basis;
 };
 
+/*
 class HeisenbergHamiltonianSolver{
   public:
     HeisenbergHamiltonianSolver();
     void set_bonds(vector<HeisenbergBond>& bonds);
-    void set_fields(vector<SiteDependentMagneticField>& fields){this->fields = fields;};
     void calculate_eigenvalues_eigenvectors();
-    void calculate_groundstate_site_dependent_magnetization();
-    vector<fptype> get_groundstate_site_dependent_magnetization(){return maggs;};
-    fptype get_groundstate_total_magnetization_per_site(){return totalmag;};
-    fptype get_groundstate_energy_per_site(){return gsenergy/nsites;};
   private:
     Eigen::MatrixXd get_hamiltonian(vector<SpinState>& basis);
     fptype get_hamiltonian_element(SpinState* u, SpinState* v);
     uint nsites;
     fptype gsenergy, totalmag;
     vector<HeisenbergBond> bonds;
-    vector<SiteDependentMagneticField> fields;
     vector<int> allowed_sz;
     vector<vector<SpinState> > basis_sectors; 
-    vector<Eigen::VectorXd> evals;
-    vector<Eigen::MatrixXd> evecs;
-    vector<fptype> maggs; //ground state site dependent magnetization
 };
+*/
 
 #endif
 

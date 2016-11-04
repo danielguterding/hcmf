@@ -2,121 +2,22 @@
 
 #include "hamiltonian.hpp"
 
-SpinState::SpinState(){
-  
-  this->spin = 0.5;
-  this->prefactor = 1.0;
-  this->copiedstate = false;
-}
-
-SpinState::~SpinState(){
-  
-}
-
-SpinState* SpinState::apply_splus(const int i){
-  
-  if(!this->copiedstate){
-    SpinState* newstate = new SpinState;
-    this->copy_to(newstate);
-    if(!newstate->statevec[i]){ //if bit is set to 0
-      newstate->statevec[i] = 1;
-    }
-    else{
-      newstate->prefactor = 0;
-    }
-    return newstate;
-  }
-  else{
-    if(!this->statevec[i]){ //if bit is set to 0
-      this->statevec[i] = 1;
-    }
-    else{
-      this->prefactor = 0;
-    }
-    return this;
-  }
-}
-
-SpinState* SpinState::apply_sminus(const int i){
-  
-  if(!this->copiedstate){
-    SpinState* newstate = new SpinState;
-    this->copy_to(newstate);
-    if(newstate->statevec[i]){ //if bit is set to 1
-      newstate->statevec[i] = 0;
-    }
-    else{
-      newstate->prefactor = 0;
-    }
-    return newstate;
-  }
-  else{
-    if(this->statevec[i]){ //if bit is set to 1
-      this->statevec[i] = 0;
-    }
-    else{
-      this->prefactor = 0;
-    }
-    return this;
-  }
-}
-
-SpinState* SpinState::apply_sz(const int i){
-  
-  if(!this->copiedstate){
-    SpinState* newstate = new SpinState;
-    this->copy_to(newstate);
-    newstate->prefactor *= newstate->spin * (2*newstate->statevec[i]-1);
-    return newstate;
-  }
-  else{
-    this->prefactor *= this->spin * (2*this->statevec[i]-1);
-    return this;
-  }
-}
-
-fptype SpinState::dot(SpinState* otherstate){
-  
-  bool allequal = true;
-  const uint nentries = this->statevec.size();
-  uint i=0;
-  while((i < nentries) && allequal){
-    if(this->statevec[i] != otherstate->statevec[i]){
-      allequal = false;
-    }
-    i++;
-  }
-  
-  if(allequal){
-    return this->prefactor*otherstate->prefactor;
-  }
-  else{
-    return 0.0;
-  }
-}
-
-void SpinState::copy_to(SpinState* newstate){
-  
-  newstate->statevec = this->statevec;
-  newstate->prefactor = this->prefactor;
-  newstate->spin = this->spin;
-  newstate->copiedstate = true;
-}
-
-SpinBasisGenerator::SpinBasisGenerator(){
-  
-}
-
-SpinBasisGenerator::~SpinBasisGenerator(){
-  
-}
-
-vector<SpinState> SpinBasisGenerator::get_basis(const int nsites, const int sz){
+SpinBasisGeneratorSZ::SpinBasisGeneratorSZ(const uint nsites, const int sz){
   //sz is the net spin is measured in units of 1/2 to make basis generation easier
+  //this->basis.resize(0);
   
-  vector<SpinState> basis;
+  const uint nup = nsites/2 + sz;
+  //determine minimum integer value correspoding to bitpattern with all up spins to left and right
+  unsigned long long int maxbin = 0;
+   unsigned long long int minbin = 0;
+  for(uint i=0;i<nup;i++){
+    maxbin += pow(2, nsites-i-1); 
+    minbin += pow(2, i);
+  }
+  maxbin++;
+  
   string bitstring;
-  for(uint i=0;i<uint(pow(2,nsites));i++){
+  for(unsigned long long int i=minbin;i<maxbin;i++){
     vector<bool> b = convert_to_binary_vectorbool(nsites, i);
     if(sz == get_sz(b)){
       SpinState s;
@@ -124,11 +25,13 @@ vector<SpinState> SpinBasisGenerator::get_basis(const int nsites, const int sz){
       basis.push_back(s);
     }
   }
-  
-  return basis;
 }
 
-vector<bool> SpinBasisGenerator::convert_to_binary_vectorbool(const int nsites, const unsigned long long int value){
+SpinBasisGeneratorSZ::~SpinBasisGeneratorSZ(){
+  
+}
+
+vector<bool> SpinBasisGeneratorSZ::convert_to_binary_vectorbool(const int nsites, const unsigned long long int value){
   
   vector<bool> vec(nsites);
   fill(vec.begin(), vec.end(), 0);
@@ -145,7 +48,7 @@ vector<bool> SpinBasisGenerator::convert_to_binary_vectorbool(const int nsites, 
   return vec;
 }
 
-int SpinBasisGenerator::get_sz(vector<bool> v){
+int SpinBasisGeneratorSZ::get_sz(vector<bool> v){
   
   int sz = 0;
   for(uint i=0;i<v.size();i++){
@@ -154,6 +57,8 @@ int SpinBasisGenerator::get_sz(vector<bool> v){
   
   return sz;
 }
+
+/*
 
 HeisenbergHamiltonianSolver::HeisenbergHamiltonianSolver(){
   
@@ -223,46 +128,10 @@ fptype HeisenbergHamiltonianSolver::get_hamiltonian_element(SpinState* u, SpinSt
     element += b.J*v->dot(u->apply_sz(b.s2)->apply_sz(b.s1));
   }
   
-  for(uint i=0;i<fields.size();i++){ //loop over magnetic field entries
-    const SiteDependentMagneticField f = fields[i];
-    element -= f.h*v->dot(u->apply_sz(f.s));
-  }
-  
   return element;
 };
 
-void HeisenbergHamiltonianSolver::calculate_groundstate_site_dependent_magnetization(){
-  
-  const fptype threshold = 1e-13;
-  maggs.resize(0);
-  maggs.resize(nsites, 0.0);
-  //use states that lie in very narrow region around ground state and calculate their site-resolved magnetization
-  uint counter = 0;
-  for(uint i=0;i<allowed_sz.size();i++){ //loop over spin sectors
-    for(uint j=0;j<evals[i].size();j++){ //loop over eigenvalues in that sector
-      if(fabs(evals[i](j) - gsenergy) < threshold){ //if energy of state is very close to GS energy, take state into account for calculation of magnetization
-        counter++;
-        Eigen::VectorXd ev = evecs[i].col(j);
-        for(uint l=0;l<basis_sectors[i].size();l++){ //loop over basis states
-          SpinState u = basis_sectors[i][l];
-          const fptype coeff = pow(ev(l),2);
-          for(uint k=0;k<nsites;k++){ //loop over lattice sites
-            maggs[k] += coeff*u.dot(u.apply_sz(k));
-          }
-        }
-      }
-    }
-  }
-  //normalize magnetization by number of involved states
-  for(uint i=0;i<nsites;i++){
-    maggs[i] /= counter;  
-  }
-  //calculate total magnetization per site
-  totalmag = 0;
-  for(uint i=0;i<nsites;i++){
-    totalmag += maggs[i]/nsites;
-  }
-}
+*/
 
 vector<int> get_allowed_sz(const int nsites){
   //sz is the net spin measured in units of 1/2

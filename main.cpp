@@ -15,42 +15,38 @@ using namespace std;
 
 int main(int argc, char* argv[]){
   
-  if(4 == argc){
-    const string InfilenameHeisenbergBonds = argv[1];
-    const string InfilenameSiteDependentMagneticFields = argv[2];
-    const string OutfilenameMagnetization = argv[3];
+  if(3 == argc){
+    const string InfilenameBonds = argv[1];
+    const string OutfilenameSpinBasis = argv[2];
     
     //read Heisenberg bonds
-    HeisenbergBondReader BondReader;
-    BondReader.read_file(InfilenameHeisenbergBonds);
-    vector<HeisenbergBond> bonds = BondReader.get_bonds();
+    HeisenbergBondReader HeisenbergBondReader;
+    HeisenbergBondReader.read_file(InfilenameBonds);
+    vector<HeisenbergBond> bonds = HeisenbergBondReader.get_bonds();
+
+    //get number of sites
+    const uint nsites = HeisenbergBondReader.get_nsites();
+    //set desired dz value to zero
+    const int sz = 0;
     
-    //read magnetic field on each site
-    SiteDependentMagneticFieldReader FieldReader;
-    FieldReader.read_file(InfilenameSiteDependentMagneticFields);
-    vector<SiteDependentMagneticField> fields = FieldReader.get_fields();
+    //get and write spin basis
+    SpinBasisGeneratorSZ BasisGenerator(nsites, sz);
+    vector<SpinState> basis = BasisGenerator.get_basis();
     
+    //write basis to disk
+    SpinBasisWriter BasisWriter;
+    BasisWriter.write_basis(OutfilenameSpinBasis, basis);
+
     //solve Hamiltonian
-    HeisenbergHamiltonianSolver solver;
+    /* HeisenbergHamiltonianSolver solver;
     solver.set_bonds(bonds);
-    solver.set_fields(fields);
-    solver.calculate_eigenvalues_eigenvectors();
-    solver.calculate_groundstate_site_dependent_magnetization();
+    solver.calculate_eigenvalues_eigenvectors(); */
     
-    //get magnetization per site and write to file
-    const fptype totalmag = solver.get_groundstate_total_magnetization_per_site();
-    const vector<fptype> maggs = solver.get_groundstate_site_dependent_magnetization();
-    const fptype energy_per_site = solver.get_groundstate_energy_per_site();
-    MagnetizationWriter MagWriter;
-    MagWriter.set_energy_per_site(energy_per_site);
-    MagWriter.set_total_magnetization(totalmag);
-    MagWriter.set_site_resolved_magnetization(maggs);
-    MagWriter.write_magnetization(OutfilenameMagnetization);
     cout << "Output written. Program finished successfully." << endl;
     return 0;
   }
   else{
-    cout << "Wrong number of input arguments. Please supply input file names for Heisenberg Bonds and site-dependent magnetic fields and output file name for site-dependent magnetization." << endl;
+    cout << "Wrong number of input arguments. Please supply input file names for bonds." << endl;
     return 1;
   }
 }

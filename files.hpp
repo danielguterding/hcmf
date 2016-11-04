@@ -19,9 +19,20 @@ struct HeisenbergBond{
   fptype J; //exchange coupling
 };
 
-struct SiteDependentMagneticField{
-  uint s; //site index
-  fptype h; //value of magnetic field on that site
+class SpinState{
+  public:
+    SpinState();
+    ~SpinState();
+    SpinState* apply_splus(const int i);
+    SpinState* apply_sminus(const int i);
+    SpinState* apply_sz(const int i);
+    fptype dot(SpinState* otherstate);
+    void copy_to(SpinState* newstate);
+    vector<bool> statevec;
+    fptype prefactor, spin;
+    bool copiedstate;
+  private:
+
 };
 
 class HeisenbergBondReader{
@@ -29,29 +40,18 @@ class HeisenbergBondReader{
     HeisenbergBondReader();
     void read_file(const string infilename);
     vector<HeisenbergBond> get_bonds(){return bonds;};
+    uint get_nsites(){return nsites;};
   private:
     vector<HeisenbergBond> bonds;
+    uint nsites;
 };
 
-class SiteDependentMagneticFieldReader{
+class SpinBasisWriter{
   public:
-    SiteDependentMagneticFieldReader();
-    void read_file(const string infilename);
-    vector<SiteDependentMagneticField> get_fields(){return fields;};
+    SpinBasisWriter();
+    void write_basis(string outfilename, vector<SpinState> basis);
   private:
-    vector<SiteDependentMagneticField> fields;
-};
-
-class MagnetizationWriter{
-  public:
-    MagnetizationWriter();
-    void set_energy_per_site(const fptype energy){this->energy = energy;};
-    void set_total_magnetization(const fptype totalmag){this->totalmag = totalmag;};
-    void set_site_resolved_magnetization(const vector<fptype>& sitemag){this->sitemag = sitemag;};
-    void write_magnetization(const string outfilename);
-  private:
-    fptype totalmag, energy;
-    vector<fptype> sitemag;
+  
 };
 
 #endif
