@@ -30,6 +30,7 @@ class HeisenbergHamiltonianCalculator{
     void calculate_elements();
   private:
     fptype get_hamiltonian_element(const HeisenbergBond* b, SpinState* u, SpinState* v);
+    vector<string> outfilenameseachinteraction;
     uint nsites, nJidx;
     vector<HeisenbergBond> bonds;
     vector<SpinState> basis;

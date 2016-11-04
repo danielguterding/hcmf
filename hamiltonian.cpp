@@ -83,7 +83,7 @@ void HeisenbergHamiltonianCalculator::set_outfilename(const string outfilename){
   this->outfilename = outfilename;
   boost::filesystem::path outfilepath(this->outfilename);
   boost::filesystem::ofstream outfilehandle(outfilepath);
-  vector<string> outfilenameseachinteraction(this->nJidx);
+  this->outfilenameseachinteraction.resize(0);
   for(uint i=0;i<this->nJidx+1;i++){
     string ofn = (boost::format("%s.%03i") % this->outfilename % i).str();
     outfilenameseachinteraction.push_back(ofn);
@@ -96,18 +96,20 @@ void HeisenbergHamiltonianCalculator::calculate_elements(){
   
   const fptype threshold = 1e-12;
   HamiltonianElement element;
-  vector<vector<HamiltonianElement> > hamiltonianelementseachinteraction(nJidx);
   for(uint i=0;i<bonds.size();i++){//loop over bonds
+    boost::filesystem::path outfilepath(this->outfilenameseachinteraction[bonds[i].Jidx]);
+    boost::filesystem::ofstream outfilehandle(outfilepath);
     for(unsigned long long int j=0;j<basis.size();j++){//row index
       for(unsigned long long int k=j;k<basis.size();k++){//column index
         element.i = j;
         element.j = k;
         element.v = get_hamiltonian_element(&bonds[i], &basis[j], &basis[k]);
         if(fabs(element.v) > threshold){
-          hamiltonianelementseachinteraction[bonds[i].Jidx].push_back(element);
+          outfilehandle << boost::format("%14i %14i % 1.14f") % element.i % element.j % element.v << endl;
         }
       }
     }
+    outfilehandle.close();
   }
 }
 
