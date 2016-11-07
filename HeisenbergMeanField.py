@@ -1,7 +1,15 @@
 import os
 import subprocess
 import numpy as np
+import scipy.sparse as spsparse
+import scipy.sparse.linalg as splinalg
 import itertools
+
+class SpinState:
+  def __init__(self, statevec):
+    self.statevec = np.array([bool(int(x)) for x in statevec], dtype=bool)
+  def get_sz_site_resolved(self):
+    return self.statevec-0.5*np.ones(self.statevec.shape)
 
 class HeisenbergBond:
   def __init__(self, s1, s2, Jidx):
@@ -17,10 +25,7 @@ class MeanFieldBond:
 
 class HeisenbergMeanFieldCalculator:
   def __init__(self):
-    self.filename_sitemag = 'sitemag.dat'
-    self.filename_fields = 'fields.dat'
-    self.filename_heisenberg_bonds = 'bonds.dat'
-    self.magfield = 0.0
+    pass
   def set_site_resolved_magnetization(self, mag):
     self.sitemag = np.zeros((self.nsites), dtype=float) + np.array(mag, dtype=float)[:self.nsites]
   def set_magnetic_field(self, field):
@@ -47,51 +52,65 @@ class HeisenbergMeanFieldCalculator:
         self.MeanFieldBonds.append(b)
     #determine number of sites from bonds
     self.nsites = max([b.s1 for b in self.HeisenbergBonds] + [b.s2 for b in self.HeisenbergBonds])+1
-  def write_input_for_cluster_solver(self):
-    #write Heisenberg bonds input file for cluster solver
-    outfilehandle = open(self.filename_heisenberg_bonds, 'w')
-    outfilehandle.write('#idx site 1, idx site 2, exchange coupling J\n')
-    for b in self.HeisenbergBonds:
-      outfilehandle.write('%i %i % f\n' % (b.s1, b.s2, self.exchange_parameters[b.Jidx]))
-    outfilehandle.close()
-    #write effective magnetic fields for cluster solver
-    outfilehandle = open(self.filename_fields, 'w')
-    outfilehandle.write('#site idx, magnetic field\n')
-    sitefields = 2.0*self.magfield*np.ones((self.nsites), dtype=float)
-    for b in self.MeanFieldBonds: #add mean field bond induced local fields to global magnetic field
-      addterm = -self.exchange_parameters[b.Jidx]*self.sitemag[b.sm]
-      #print addterm
-      sitefields[b.sr] += addterm 
-    #print sitefields
-    for i,f in enumerate(sitefields):
-      outfilehandle.write('%i % f\n' % (i, f))
-    outfilehandle.close()
-  def execute_cluster_solver(self):
-    command = './heisenberg %s %s %s' % (self.filename_heisenberg_bonds, self.filename_fields, self.filename_sitemag)
-    FNULL = open(os.devnull, 'w')
-    p = subprocess.Popen(command.split(), stdout=FNULL, stderr=subprocess.STDOUT) #hide cluster solver output
-    #p = subprocess.Popen(command.split())
-    p.wait()
-    FNULL.close()
-  def read_site_magnetization(self):
-    infilehandle = open(self.filename_sitemag)
-    lines = infilehandle.readlines()
-    self.energy_per_site = float(lines[1])
-    self.totalmag_per_site = float(lines[3])
-    self.newsitemag = np.zeros((self.nsites))
-    for l in lines[5:]:
-      sl = l.strip().split()
-      i = int(sl[0])
-      h = float(sl[1])
-      self.newsitemag[i] = h
-    #add mean field terms <Si><Sj> to energy
+  def read_spinbasis(self, infilename):
+    self.spinbasisfilename = infilename
+    self.basisstates = []
+    infilehandle = open(self.spinbasisfilename, 'r')
+    for i,l in enumerate(infilehandle):
+      if i>0:
+        sl = l.strip().split()
+        s = SpinState(sl[1])
+        self.basisstates.append(s)
+    infilehandle.close()
+    self.nbasisstates = len(self.basisstates)
+  def read_hamiltonian(self, infilename):
+    self.hamiltonianmatrices = []
+    infilehandle1 = open(infilename, 'r')
+    for f in infilehandle1:
+      infilehandle2 = open(f.strip(), 'r')
+      i = []
+      j = []
+      v = []
+      for l in infilehandle2:
+        sl = l.strip().split()
+        i.append(int(sl[0]))
+        j.append(int(sl[1]))
+        v.append(float(sl[2]))
+      infilehandle2.close()
+      #construct sparse matrix in coo format and convert directly to csr format
+      self.hamiltonianmatrices.append(spsparse.coo_matrix((v,(i,j)), shape=(self.nbasisstates, self.nbasisstates)).tocsr())
+    infilehandle1.close()
+  def solve_cluster(self):
+    #construct mean-field magnetic fields on each site
+    sitefields = np.zeros((self.nsites), dtype=float)
+    for b in self.MeanFieldBonds:
+      sitefields[b.sr] -= self.exchange_parameters[b.Jidx]*self.sitemag[b.sm]
+    #construct hamiltonian first as empty matrix
+    A = spsparse.coo_matrix((self.nbasisstates, self.nbasisstates)).tocsr()
+    #add hamiltonian matrices multiplied by respective exchange term
+    for J,B in zip(self.exchange_parameters, self.hamiltonianmatrices):
+      A = A + B.multiply(J)
+    #add hamiltonian part from effective magnetic fields, this is a diagonal matrix by definition
+    magterms = []
+    i = []
+    for j,s in enumerate(self.basisstates):
+      i.append(j) 
+      magterms.append(np.sum(np.multiply(s.get_sz_site_resolved(), self.sitemag)))
+    A = A + spsparse.coo_matrix((magterms,(i,i)), shape=(self.nbasisstates, self.nbasisstates)).tocsr()
+    #initialize eigensolver  
+    k = 1 #find only ground state
+    self.eigenvalues, self.eigenvectors = splinalg.eigsh(A, k=k, which='SA')
+  def calculate_new_magnetization(self):
+    self.newsitemag = np.zeros(self.nsites)
+    for s,p in zip(self.basisstates, self.eigenvectors[0]):
+      self.newsitemag += p*s.get_sz_site_resolved()
+  def calculate_new_energy_per_site(self):
     addenergy = 0.0
     for b in self.MeanFieldBonds:
       addenergy -= 0.5*self.exchange_parameters[b.Jidx]*self.newsitemag[b.sr]*self.newsitemag[b.sm]
-    self.energy_per_site += addenergy/float(self.nsites)
-    infilehandle.close()
+    self.energy_per_site = self.eigenvalues[0] + addenergy/float(self.nsites)
   def get_magnetization_difference_measure_and_mix_magnetization(self):
-    #print self.sitemag
+    print self.sitemag
     #print self.newsitemag
     convparam = np.linalg.norm(self.newsitemag - self.sitemag)/self.nsites
     mixingfac = 0.45
@@ -102,12 +121,12 @@ class HeisenbergMeanFieldCalculator:
     maxiter = 1000
     itcounter = 0
     while True:
-      self.write_input_for_cluster_solver()
-      self.execute_cluster_solver()
-      self.read_site_magnetization()
+      self.solve_cluster()
+      self.calculate_new_magnetization()
+      self.calculate_new_energy_per_site()
       convparam = self.get_magnetization_difference_measure_and_mix_magnetization()
       #print 'Iteration: %i\nConvergence parameter: %f' % (itcounter, convparam)
-      #print 'GS energy: % f' % self.energy_per_site
+      print 'GS energy: % f' % self.energy_per_site
       itcounter += 1
       if(convparam < threshold):
         print 'Self-consistent loop converged after %i iterations.' % itcounter
@@ -118,7 +137,7 @@ class HeisenbergMeanFieldCalculator:
   def get_energy_per_site(self):
     return self.energy_per_site
   def get_total_magnetization_per_site(self):
-    return self.totalmag_per_site
+    return np.mean(self.sitemag)
   def get_magnetization_of_site(self,idx):
     return self.sitemag[int(idx)]
   
@@ -155,7 +174,7 @@ class ClassicalGroundStateCalculator:
         seen.add(x)
         yield x
   def calculate_classical_energies(self):
-    #frist generate all unique possible states
+    #first generate all unique possible states
     baseconfig = 5*[1] + 4*[-1]
     self.states = [s for s in self.unique(itertools.permutations(baseconfig))]
     self.energies = [self.get_energy_of_config_per_site(s) for s in self.states]
