@@ -99,11 +99,15 @@ class HeisenbergMeanFieldCalculator:
     for J,B in zip(self.exchange_parameters, self.hamiltonianmatrices):
       A = A + B.multiply(J)
     #add hamiltonian part from effective magnetic fields, this is a diagonal matrix by definition
+    effectivefields = np.zeros(self.nsites)
+    for b in self.MeanFieldBonds: #add mean field bond induced local fields to global magnetic field
+      effectivefields[b.sr] -= self.exchange_parameters[b.Jidx]*self.sitemag[b.sm]
+    print "Effective fields:",  effectivefields
     magterms = []
     i = []
     for j,s in enumerate(self.basisstates):
       i.append(j) 
-      magterms.append(np.sum(np.multiply(s.get_sz_site_resolved(), self.sitemag)))
+      magterms.append(np.sum(np.multiply(s.get_sz_site_resolved(), effectivefields)))
     M = spsparse.coo_matrix((magterms,(i,i)), shape=(self.nbasisstates, self.nbasisstates)).tocsr()
     A = A - M
     #initialize eigensolver  
@@ -112,13 +116,12 @@ class HeisenbergMeanFieldCalculator:
   def calculate_new_magnetization(self):
     self.newsitemag = np.zeros(self.nsites)
     for s,p in zip(self.basisstates, self.eigenvectors):
-      print s.get_sz_site_resolved()
       self.newsitemag += pow(p,2)*s.get_sz_site_resolved()
   def calculate_new_energy_per_site(self):
-    addenergy = 0.0
+    mfenergy = 0.0
     for b in self.MeanFieldBonds:
-      addenergy -= 0.5*self.exchange_parameters[b.Jidx]*self.newsitemag[b.sr]*self.newsitemag[b.sm]
-    self.energy_per_site = (self.eigenvalues[0] + addenergy)/float(self.nsites)
+      mfenergy -= 0.5*self.exchange_parameters[b.Jidx]*self.newsitemag[b.sr]*self.newsitemag[b.sm]
+    self.energy_per_site = (self.eigenvalues[0] + mfenergy)/float(self.nsites)
   def get_magnetization_difference_measure_and_mix_magnetization(self):
     #print self.sitemag
     #print self.newsitemag
@@ -128,7 +131,7 @@ class HeisenbergMeanFieldCalculator:
     return convparam
   def solve_selfconsistently(self):
     threshold = 1e-5
-    maxiter = 100
+    maxiter = 300
     itcounter = 0
     while True:
       self.solve_cluster()
