@@ -38,17 +38,12 @@ int main(int argc, char* argv[]){
     SpinBasisWriter BasisWriter;
     BasisWriter.write_basis(OutfilenameSpinBasis, basis);
     
-    //calculate Hamiltonian
+    //calculate Hamiltonian and write to disk
     HeisenbergHamiltonianCalculator calc;
     calc.set_bonds(bonds);
     calc.set_outfilename(OutfilenameHamiltonian);
     calc.set_basis(basis);
     calc.calculate_elements();
-
-    //solve Hamiltonian
-    /* HeisenbergHamiltonianSolver solver;
-    solver.set_bonds(bonds);
-    solver.calculate_eigenvalues_eigenvectors(); */
     
     cout << "Output written. Program finished successfully." << endl;
     return 0;

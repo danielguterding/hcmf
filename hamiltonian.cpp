@@ -4,7 +4,7 @@
 
 SpinBasisGeneratorSZ::SpinBasisGeneratorSZ(const uint nsites, const int sz){
   //sz is the net spin is measured in units of 1/2 to make basis generation easier
-  //this->basis.resize(0);
+  this->basis.resize(0);
   
   const uint nup = nsites/2 + sz;
   //determine minimum integer value correspoding to bitpattern with all up spins to left and right
