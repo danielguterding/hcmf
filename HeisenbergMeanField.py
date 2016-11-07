@@ -73,9 +73,17 @@ class HeisenbergMeanFieldCalculator:
       v = []
       for l in infilehandle2:
         sl = l.strip().split()
-        i.append(int(sl[0]))
-        j.append(int(sl[1]))
-        v.append(float(sl[2]))
+        iidx = int(sl[0])
+        jidx = int(sl[1])
+        vval = float(sl[2])
+        i.append(iidx)
+        j.append(jidx)
+        v.append(vval)
+        #also add the lower triangle
+        if iidx != jidx:
+          i.append(jidx)
+          j.append(iidx)
+          v.append(vval)
       infilehandle2.close()
       #construct sparse matrix in coo format and convert directly to csr format
       self.hamiltonianmatrices.append(spsparse.coo_matrix((v,(i,j)), shape=(self.nbasisstates, self.nbasisstates)).tocsr())
@@ -96,14 +104,16 @@ class HeisenbergMeanFieldCalculator:
     for j,s in enumerate(self.basisstates):
       i.append(j) 
       magterms.append(np.sum(np.multiply(s.get_sz_site_resolved(), self.sitemag)))
-    A = A - spsparse.coo_matrix((magterms,(i,i)), shape=(self.nbasisstates, self.nbasisstates)).tocsr()
+    M = spsparse.coo_matrix((magterms,(i,i)), shape=(self.nbasisstates, self.nbasisstates)).tocsr()
+    A = A - M
     #initialize eigensolver  
     k = 1 #find only ground state
     self.eigenvalues, self.eigenvectors = splinalg.eigsh(A, k=k, which='SA')
   def calculate_new_magnetization(self):
     self.newsitemag = np.zeros(self.nsites)
-    for s,p in zip(self.basisstates, self.eigenvectors[0]):
-      self.newsitemag += p*s.get_sz_site_resolved()
+    for s,p in zip(self.basisstates, self.eigenvectors):
+      print s.get_sz_site_resolved()
+      self.newsitemag += pow(p,2)*s.get_sz_site_resolved()
   def calculate_new_energy_per_site(self):
     addenergy = 0.0
     for b in self.MeanFieldBonds:
@@ -124,10 +134,10 @@ class HeisenbergMeanFieldCalculator:
       self.solve_cluster()
       self.calculate_new_magnetization()
       self.calculate_new_energy_per_site()
+      print self.sitemag
       convparam = self.get_magnetization_difference_measure_and_mix_magnetization()
       print 'Iteration: %i\nConvergence parameter: %f' % (itcounter, convparam)
-      #print 'GS energy: % f' % self.energy_per_site
-      #print self.sitemag
+      print 'GS energy: % f' % self.energy_per_site
       itcounter += 1
       if(convparam < threshold):
         print 'Self-consistent loop converged after %i iterations.' % itcounter
