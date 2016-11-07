@@ -54,7 +54,7 @@ int main(int argc, char* argv[]){
     return 0;
   }
   else{
-    cout << "Wrong number of input arguments. Please supply input file names for bonds." << endl;
+    cout << "Wrong number of input arguments. Please supply input file names for bonds, output file name for the spin basis and output file name for the Hamiltonian." << endl;
     return 1;
   }
 }
