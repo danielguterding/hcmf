@@ -95,11 +95,13 @@ void HeisenbergHamiltonianCalculator::set_outfilename(const string outfilename){
 void HeisenbergHamiltonianCalculator::calculate_elements(){
   
   const fptype threshold = 1e-12;
-  HamiltonianElement element;
+  
   for(uint h=0;h<this->nJidx+1;h++){
     boost::filesystem::path outfilepath(this->outfilenameseachinteraction[h]);
     boost::filesystem::ofstream outfilehandle(outfilepath);
+    #pragma omp parallel for schedule(dynamic, 1)
     for(unsigned long long int i=0;i<basis.size();i++){//row index
+      HamiltonianElement element;
       for(unsigned long long int j=i;j<basis.size();j++){//column index
         element.i = i;
         element.j = j;
@@ -110,6 +112,7 @@ void HeisenbergHamiltonianCalculator::calculate_elements(){
           }
         }
         if(fabs(element.v) > threshold){
+          #pragma omp critical
           outfilehandle << boost::format("%14i %14i % 1.14f") % element.i % element.j % element.v << endl;
         }
       }

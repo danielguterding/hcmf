@@ -1,5 +1,5 @@
 CXX      = clang++
-CXXFLAGS = -Wall -O3 -std=c++11 -I/home/guterding/local/eigen3
+CXXFLAGS = -Wall -O3 -std=c++11 -fopenmp -I/home/guterding/local/eigen3
 LDFLAGS  = -lm -lboost_system -lboost_filesystem
 
 OBJECTS = main.o hamiltonian.o files.o
