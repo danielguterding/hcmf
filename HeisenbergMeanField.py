@@ -99,15 +99,11 @@ class HeisenbergMeanFieldCalculator:
     for J,B in zip(self.exchange_parameters, self.hamiltonianmatrices):
       A = A + B.multiply(J)
     #add hamiltonian part from effective magnetic fields, this is a diagonal matrix by definition
-    effectivefields = np.zeros(self.nsites)
-    for b in self.MeanFieldBonds: #add mean field bond induced local fields to global magnetic field
-      effectivefields[b.sr] -= self.exchange_parameters[b.Jidx]*self.sitemag[b.sm]
-    print "Effective fields:",  effectivefields
     magterms = []
     i = []
     for j,s in enumerate(self.basisstates):
       i.append(j) 
-      magterms.append(np.sum(np.multiply(s.get_sz_site_resolved(), effectivefields)))
+      magterms.append(np.sum(np.multiply(s.get_sz_site_resolved(), sitefields)))
     M = spsparse.coo_matrix((magterms,(i,i)), shape=(self.nbasisstates, self.nbasisstates)).tocsr()
     A = A - M
     #initialize eigensolver  
@@ -123,24 +119,22 @@ class HeisenbergMeanFieldCalculator:
       mfenergy -= 0.5*self.exchange_parameters[b.Jidx]*self.newsitemag[b.sr]*self.newsitemag[b.sm]
     self.energy_per_site = (self.eigenvalues[0] + mfenergy)/float(self.nsites)
   def get_magnetization_difference_measure_and_mix_magnetization(self):
-    #print self.sitemag
-    #print self.newsitemag
     convparam = np.linalg.norm(self.newsitemag - self.sitemag)/self.nsites
     mixingfac = 0.45
     self.sitemag = self.sitemag*(1-mixingfac) + self.newsitemag*mixingfac
     return convparam
   def solve_selfconsistently(self):
     threshold = 1e-5
-    maxiter = 300
+    maxiter = 1000
     itcounter = 0
     while True:
       self.solve_cluster()
       self.calculate_new_magnetization()
       self.calculate_new_energy_per_site()
-      print self.sitemag
+      #print "Sitemag:", self.sitemag
       convparam = self.get_magnetization_difference_measure_and_mix_magnetization()
-      print 'Iteration: %i\nConvergence parameter: %f' % (itcounter, convparam)
-      print 'GS energy: % f' % self.energy_per_site
+      #print 'Iteration: %i\nConvergence parameter: %f' % (itcounter, convparam)
+      #print 'GS energy: % f' % self.energy_per_site
       itcounter += 1
       if(convparam < threshold):
         print 'Self-consistent loop converged after %i iterations.' % itcounter
