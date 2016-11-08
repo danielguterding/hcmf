@@ -11,7 +11,7 @@ SpinState::SpinState(){
 }
 
 SpinState::~SpinState(){
-  
+
 }
 
 SpinState* SpinState::apply_splus(const int i){
@@ -88,8 +88,11 @@ fptype SpinState::dot(SpinState* otherstate){
     i++;
   }
   
+  const fptype result = this->prefactor*otherstate->prefactor;
+  delete otherstate;
+  
   if(allequal){
-    return this->prefactor*otherstate->prefactor;
+    return result;
   }
   else{
     return 0.0;
