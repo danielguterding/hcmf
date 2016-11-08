@@ -39,8 +39,8 @@ def write_results(outfilename, results):
   outfilehandle.close()
 
 def main():
-  outfilename = 'results_square_J1_J2_2x4.dat'
-  modelfilename = 'examples/meanfieldmodel_square_x2y4.dat'
+  outfilename = 'results_square_J1_J2_4x4.dat'
+  modelfilename = 'examples/meanfieldmodel_square_x4y4.dat'
   spinbasisfilename = 'spinbasis.dat'
   hamiltonianfilename = 'hamiltonian.dat'
   magneticpatterns = get_patterns()
