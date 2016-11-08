@@ -59,7 +59,7 @@ def main():
       calc.set_exchange_parameters(exchange_parameters)
       calc.set_site_resolved_magnetization(p.pattern)
       calc.solve_selfconsistently()
-      res_this_J2.append(MeanFieldResult(J2, p.name,calc.get_energy_per_site(),calc.get_total_magnetization_per_site(),calc.get_magnetization_of_site(0)))
+      res_this_J2.append(MeanFieldResult(J2, p.name,calc.get_energy_per_site(),calc.get_total_magnetization_per_site(),calc.get_magnetization_of_site(2)))
     results.append(res_this_J2)
   write_results(outfilename, results)
   return 0

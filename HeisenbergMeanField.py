@@ -125,7 +125,7 @@ class HeisenbergMeanFieldCalculator:
     return convparam
   def solve_selfconsistently(self):
     threshold = 1e-4
-    maxiter = 1000
+    maxiter = 100
     itcounter = 0
     while True:
       self.solve_cluster()

@@ -17,9 +17,9 @@ class MeanFieldResult:
 
 def get_patterns():
   patterns = []
-  patterns.append(MagneticOrder('Neel', [0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5]))
-  patterns.append(MagneticOrder('PM', [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
-  patterns.append(MagneticOrder('Stripe', [-0.5, -0.5, -0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, -0.5, -0.5, 0.5, 0.5, 0.5, 0.5]))
+  #patterns.append(MagneticOrder('Neel', [0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5]))
+  #patterns.append(MagneticOrder('PM', [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
+  patterns.append(MagneticOrder('Stripe', [-0.4, -0.4, -0.4, -0.4, 0.4, 0.4, 0.4, 0.4, -0.4, -0.4, -0.4, -0.4, 0.4, 0.4, 0.4, 0.4]))
   return patterns
 
 def write_results(outfilename, results):
@@ -48,7 +48,7 @@ def main():
   calc.read_modelfile(modelfilename)
   calc.read_spinbasis(spinbasisfilename)
   calc.read_hamiltonian(hamiltonianfilename)
-  J2vals = np.linspace(0,0.6,num=30,endpoint=True)
+  J2vals = np.linspace(0.0,1.0,num=30,endpoint=True)
   B = 0.0
   results = []
   for J2 in J2vals:
@@ -59,7 +59,7 @@ def main():
       calc.set_exchange_parameters(exchange_parameters)
       calc.set_site_resolved_magnetization(p.pattern)
       calc.solve_selfconsistently()
-      res_this_J2.append(MeanFieldResult(J2, p.name,calc.get_energy_per_site(),calc.get_total_magnetization_per_site(),calc.get_magnetization_of_site(0)))
+      res_this_J2.append(MeanFieldResult(J2, p.name,calc.get_energy_per_site(),calc.get_total_magnetization_per_site(),calc.get_magnetization_of_site(5)))
     results.append(res_this_J2)
   write_results(outfilename, results)
   return 0
