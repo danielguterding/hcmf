@@ -8,8 +8,9 @@ import itertools
 class SpinState:
   def __init__(self, statevec):
     self.statevec = np.array([bool(int(x)) for x in statevec], dtype=bool)
+    self.sz_site_resolved = self.statevec-0.5*np.ones(self.statevec.shape)
   def get_sz_site_resolved(self):
-    return self.statevec-0.5*np.ones(self.statevec.shape)
+    return self.sz_site_resolved
 
 class HeisenbergBond:
   def __init__(self, s1, s2, Jidx):
