@@ -96,14 +96,19 @@ void HeisenbergHamiltonianCalculator::calculate_elements(){
   
   const fptype threshold = 1e-12;
   HamiltonianElement element;
-  for(uint i=0;i<bonds.size();i++){//loop over bonds
-    boost::filesystem::path outfilepath(this->outfilenameseachinteraction[bonds[i].Jidx]);
+  for(uint h=0;h<this->nJidx;h++){
+    boost::filesystem::path outfilepath(this->outfilenameseachinteraction[h]);
     boost::filesystem::ofstream outfilehandle(outfilepath);
-    for(unsigned long long int j=0;j<basis.size();j++){//row index
-      for(unsigned long long int k=j;k<basis.size();k++){//column index
-        element.i = j;
-        element.j = k;
-        element.v = get_hamiltonian_element(&bonds[i], &basis[j], &basis[k]);
+    for(unsigned long long int i=0;i<basis.size();i++){//row index
+      for(unsigned long long int j=i;j<basis.size();j++){//column index
+        element.i = i;
+        element.j = j;
+        element.v = 0;
+        for(uint k=0;k<bonds.size();k++){//loop over bonds
+          if(h == bonds[k].Jidx){
+            element.v += get_hamiltonian_element(&bonds[k], &basis[i], &basis[j]);
+          }
+        }
         if(fabs(element.v) > threshold){
           outfilehandle << boost::format("%14i %14i % 1.14f") % element.i % element.j % element.v << endl;
         }
