@@ -124,7 +124,7 @@ class HeisenbergMeanFieldCalculator:
     self.sitemag = self.sitemag*(1-mixingfac) + self.newsitemag*mixingfac
     return convparam
   def solve_selfconsistently(self):
-    threshold = 1e-5
+    threshold = 1e-4
     maxiter = 1000
     itcounter = 0
     while True:
