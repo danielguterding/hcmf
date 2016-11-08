@@ -17,8 +17,8 @@ class MeanFieldResult:
 
 def get_patterns():
   patterns = []
-  #patterns.append(MagneticOrder('Neel', [0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5]))
-  #patterns.append(MagneticOrder('PM', [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
+  patterns.append(MagneticOrder('Neel', [0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5]))
+  patterns.append(MagneticOrder('PM', [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
   patterns.append(MagneticOrder('Stripe', [-0.4, -0.4, -0.4, -0.4, 0.4, 0.4, 0.4, 0.4, -0.4, -0.4, -0.4, -0.4, 0.4, 0.4, 0.4, 0.4]))
   return patterns
 
