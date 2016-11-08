@@ -96,7 +96,7 @@ void HeisenbergHamiltonianCalculator::calculate_elements(){
   
   const fptype threshold = 1e-12;
   HamiltonianElement element;
-  for(uint h=0;h<this->nJidx;h++){
+  for(uint h=0;h<this->nJidx+1;h++){
     boost::filesystem::path outfilepath(this->outfilenameseachinteraction[h]);
     boost::filesystem::ofstream outfilehandle(outfilepath);
     for(unsigned long long int i=0;i<basis.size();i++){//row index
