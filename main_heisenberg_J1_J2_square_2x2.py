@@ -15,7 +15,7 @@ class MeanFieldResult:
     self.totalmag = float(totalmag)
     self.sitemag = float(sitemag)
 
-def get_patterns_honeycomb():
+def get_patterns():
   patterns = []
   patterns.append(MagneticOrder('Neel', [0.5, -0.5, 0.5, -0.5]))
   patterns.append(MagneticOrder('PM', [0, 0, 0, 0]))
@@ -41,9 +41,13 @@ def write_results(outfilename, results):
 def main():
   outfilename = 'results_square_J1_J2_2x2.dat'
   modelfilename = 'examples/meanfieldmodel_square_x2y2.dat'
-  magneticpatterns = get_patterns_honeycomb()
+  spinbasisfilename = 'spinbasis_square_x2y2.dat'
+  hamiltonianfilename = 'hamiltonian_square_x2y2.dat'
+  magneticpatterns = get_patterns()
   calc = HeisenbergMeanFieldCalculator()
   calc.read_modelfile(modelfilename)
+  calc.read_spinbasis(spinbasisfilename)
+  calc.read_hamiltonian(hamiltonianfilename)
   J2vals = np.linspace(0,1.0,num=30,endpoint=True)
   B = 0.0
   results = []

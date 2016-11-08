@@ -41,8 +41,8 @@ def write_results(outfilename, results):
 def main():
   outfilename = 'results_square_J1_J2_2x4.dat'
   modelfilename = 'examples/meanfieldmodel_square_x2y4.dat'
-  spinbasisfilename = 'spinbasis.dat'
-  hamiltonianfilename = 'hamiltonian.dat'
+  spinbasisfilename = 'spinbasis_square_x2y4.dat'
+  hamiltonianfilename = 'hamiltonian_square_x2y4.dat'
   magneticpatterns = get_patterns()
   calc = HeisenbergMeanFieldCalculator()
   calc.read_modelfile(modelfilename)
