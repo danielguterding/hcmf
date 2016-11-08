@@ -70,7 +70,7 @@ void HeisenbergHamiltonianCalculator::set_bonds(vector<HeisenbergBond>& bonds){
   
   //sort bonds by Jidx to determine how many different interaction terms we have
   sort(this->bonds.begin(), this->bonds.end(), [](const HeisenbergBond& b1, const HeisenbergBond& b2){return b1.Jidx > b2.Jidx;}); //compare with inline lambda function
-  this->nJidx = bonds[0].Jidx+1;
+  this->nJidx = this->bonds[0].Jidx+1;
 }
 
 void HeisenbergHamiltonianCalculator::set_basis(const vector<SpinState>& basis){
@@ -84,7 +84,7 @@ void HeisenbergHamiltonianCalculator::set_outfilename(const string outfilename){
   boost::filesystem::path outfilepath(this->outfilename);
   boost::filesystem::ofstream outfilehandle(outfilepath);
   this->outfilenameseachinteraction.resize(0);
-  for(uint i=0;i<this->nJidx+1;i++){
+  for(uint i=0;i<this->nJidx;i++){
     string ofn = (boost::format("%s.%03i") % this->outfilename % i).str();
     outfilenameseachinteraction.push_back(ofn);
     outfilehandle << ofn << endl;
@@ -96,7 +96,7 @@ void HeisenbergHamiltonianCalculator::calculate_elements(){
   
   const fptype threshold = 1e-12;
   
-  for(uint h=0;h<this->nJidx+1;h++){
+  for(uint h=0;h<this->nJidx;h++){
     boost::filesystem::path outfilepath(this->outfilenameseachinteraction[h]);
     boost::filesystem::ofstream outfilehandle(outfilepath);
     #pragma omp parallel for schedule(dynamic, 1)
