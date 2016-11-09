@@ -8,6 +8,7 @@ sitemag.dat
 result*
 hamiltonian.dat*
 spinbasis.dat
-*.dat*
 job.sh
 slurm.*
+spinbasis*
+hamiltonian*.dat*
