@@ -125,16 +125,16 @@ class HeisenbergMeanFieldCalculator:
     self.sitemag = self.sitemag*(1-mixingfac) + self.newsitemag*mixingfac
     return convparam
   def solve_selfconsistently(self):
-    threshold = 1e-4
+    threshold = 1e-2
     maxiter = 100
     itcounter = 0
     while True:
       self.solve_cluster()
       self.calculate_new_magnetization()
       self.calculate_new_energy_per_site()
-      #print "Sitemag:", self.sitemag
+      print "Sitemag:", self.sitemag
       convparam = self.get_magnetization_difference_measure_and_mix_magnetization()
-      #print 'Iteration: %i\nConvergence parameter: %f' % (itcounter, convparam)
+      print 'Iteration: %i\nConvergence parameter: %f' % (itcounter, convparam)
       #print 'GS energy: % f' % self.energy_per_site
       itcounter += 1
       if(convparam < threshold):
@@ -175,17 +175,20 @@ class ClassicalGroundStateCalculator:
     self.nsites = max([b.s1 for b in self.HeisenbergBonds] + [b.s2 for b in self.HeisenbergBonds])+1
   def set_exchange_parameters(self, param):
     self.exchange_parameters = np.array(param, dtype=float)
-  def unique(self, iterable):
-    seen = set()
-    for x in iterable:
-        if x in seen:
-            continue
-        seen.add(x)
-        yield x
+  def read_spinbasis(self, infilename):
+    self.spinbasisfilename = infilename
+    self.states = []
+    infilehandle = open(self.spinbasisfilename, 'r')
+    for i,l in enumerate(infilehandle):
+      if i>0:
+        sl = l.strip().split()
+        s = np.array([2*int(x)-1 for x in sl[1]], dtype=int)
+        self.states.append(s)
+    infilehandle.close()
+    self.nbasisstates = len(self.states)        
   def calculate_classical_energies(self):
     #first generate all unique possible states
-    baseconfig = 5*[1] + 4*[-1]
-    self.states = [s for s in self.unique(itertools.permutations(baseconfig))]
+    baseconfig = self.nsites/2*[1] + self.nsites/2*[-1]
     self.energies = [self.get_energy_of_config_per_site(s) for s in self.states]
     self.sortidx = np.argsort(self.energies)
   def get_energy_of_config_per_site(self, state):
