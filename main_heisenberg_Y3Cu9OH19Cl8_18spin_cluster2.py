@@ -38,7 +38,7 @@ def write_results(outfilename, results):
   outfilehandle.close()
 
 def main():
-  outfilename = 'results_Y3Cu9OH19Cl8_18spin_cluster2.dat'
+  outfilename = 'results_Y3Cu9OH19Cl8_18spin_cluster2_J0_0p1.dat'
   modelfilename = 'examples/meanfieldmodel_Y3Cu9OH19Cl8_18spin_cluster2.dat'
   spinbasisfilename = 'spinbasis_Y3Cu9OH19Cl8_18spin_cluster2.dat'
   hamiltonianfilename = 'hamiltonian_Y3Cu9OH19Cl8_18spin_cluster2.dat'
@@ -47,7 +47,7 @@ def main():
   calc.read_modelfile(modelfilename)
   calc.read_spinbasis(spinbasisfilename)
   calc.read_hamiltonian(hamiltonianfilename)
-  J0 = 0.0
+  J0 = 0.1
   J1 = 1.0
   J2vals = np.linspace(0.1,1.0,num=10,endpoint=True)
   B = 0.0

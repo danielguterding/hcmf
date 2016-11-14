@@ -46,9 +46,12 @@ def main():
   calc = ClassicalGroundStateCalculator()
   calc.read_modelfile(modelfilename)
   calc.read_spinbasis(spinbasisfilename)
-  calc.set_exchange_parameters([0.0, 1.0, 0.0])
-  calc.calculate_classical_energies()
-  calc.print_lowest_energy_and_state()
+  for J2 in np.linspace(0.0,3.0,num=11):
+    calc.set_exchange_parameters([0.0, 1.0, J2])
+    calc.calculate_classical_energies()
+    print J2, calc.get_energy_of_config_per_site(np.array([ 1, -1,  1,  1, -1, -1, -1,  1,  1, -1,  1, -1, -1,  1,  1,  1, -1, -1])),calc.get_energy_of_config_per_site(np.array([ 1, -1,  1,  1, -1,  1, -1,  1,  1, -1,  1, -1, -1,  1,  1, -1, -1, -1])),calc.get_energy_of_config_per_site(np.array([-1,  1, -1, -1,  1, -1,  1, -1, -1,  1, -1,  1,  1, -1,  1, -1,  1,  1]))
+    #print J2
+    #calc.print_lowest_energy_and_state()
   
   #magneticpatterns = get_patterns()
   #calc = HeisenbergMeanFieldCalculator()

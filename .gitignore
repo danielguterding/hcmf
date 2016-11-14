@@ -12,3 +12,4 @@ job.sh
 slurm.*
 spinbasis*
 hamiltonian*.dat*
+job_diag.sh

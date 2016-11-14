@@ -125,7 +125,7 @@ class HeisenbergMeanFieldCalculator:
     self.sitemag = self.sitemag*(1-mixingfac) + self.newsitemag*mixingfac
     return convparam
   def solve_selfconsistently(self):
-    threshold = 1e-2
+    threshold = 1e-4
     maxiter = 100
     itcounter = 0
     while True:
@@ -200,7 +200,7 @@ class ClassicalGroundStateCalculator:
     return energy/float(self.nsites)
   def print_states_and_energies_per_site(self):
     for idx in self.sortidx[::-1]:
-      print self.energies[idx], self.states[idx]
+      print self.energies[idx], list(self.states[idx])
   def print_lowest_energy_and_state(self):
     idx = self.sortidx[0]
     print self.energies[idx], self.states[idx]
